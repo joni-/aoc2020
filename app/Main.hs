@@ -1,6 +1,8 @@
 module Main where
 
-import Lib
+import qualified Day1
 
 main :: IO ()
-main = someFunc
+main = do
+  input <- readFile "inputs/day1.input"
+  putStrLn $ Day1.solveA input
