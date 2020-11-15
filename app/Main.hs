@@ -1,8 +1,22 @@
 module Main where
 
+import Data.Char
+import qualified Data.HashMap.Strict as HashMap
 import qualified Day1
+import System.Environment
+
+solveFns :: HashMap.HashMap (String, String) (String -> String)
+solveFns =
+  HashMap.fromList
+    [ (("1", "A"), Day1.solveA),
+      (("1", "B"), Day1.solveB)
+    ]
 
 main :: IO ()
 main = do
-  input <- readFile "inputs/day1.input"
-  putStrLn $ Day1.solveA input
+  [day, part] <- getArgs
+  let solverFn = HashMap.lookup (day, map toUpper part) solveFns
+  case solverFn of
+    Just fn -> do
+      interact fn
+    Nothing -> error "Invalid params"
