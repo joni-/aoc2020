@@ -13,3 +13,9 @@ Run solver for day 1 problem A:
 ```
 stack run 1 A < inputs/day1.input
 ```
+
+Generate skeleton files for day
+
+```
+./start.py 2
+```
