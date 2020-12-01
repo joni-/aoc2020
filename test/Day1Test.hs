@@ -7,6 +7,22 @@ import Test.Tasty.HUnit (testCase, (@?=))
 tests =
   testGroup
     "Day 1"
-    [ testCase "solveA" $ solveA "hello" @?= "hello",
-      testCase "solveB" $ solveA "hello" @?= "hello"
+    [ testCase "solveA" $
+        solveA
+          "1721 \
+          \979 \
+          \366 \
+          \299 \
+          \675 \
+          \1456"
+          @?= "514579",
+      testCase "solveB" $
+        solveB
+          "1721 \
+          \979 \
+          \366 \
+          \299 \
+          \675 \
+          \1456"
+          @?= "241861950"
     ]
