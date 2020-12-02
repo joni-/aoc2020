@@ -25,7 +25,7 @@ tests =
   testGroup
     "{PLACEHOLDER}"
     [ testCase "solveA" $ solveA "hello" @?= "hello",
-      testCase "solveB" $ solveA "hello" @?= "hello"
+      testCase "solveB" $ solveB "hello" @?= "hello"
     ]
 """.strip()
 
