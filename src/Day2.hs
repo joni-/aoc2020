@@ -1,11 +1,12 @@
 module Day2 where
 
+import Data.Maybe (catMaybes)
 import qualified Data.Text as T
 
 data Policy = Policy
-  { getMin :: Int,
-    getMax :: Int,
-    getC :: Char
+  { policyMin :: Int,
+    policyMax :: Int,
+    policyChar :: Char
   }
   deriving (Show)
 
@@ -14,37 +15,54 @@ type Password = String
 splitOn :: String -> String -> [String]
 splitOn c s = map T.unpack $ T.splitOn (T.pack c) (T.pack s)
 
-parsePassword :: String -> Password
-parsePassword = T.unpack . T.strip . T.pack
+trim :: String -> Password
+trim = T.unpack . T.strip . T.pack
 
-parsePolicy :: String -> Policy
--- todo: unsafe head & head . tail
-parsePolicy s = Policy {getMin = head result, getMax = (head . tail) result, getC = c}
-  where
-    -- todo: ensure there are 2 elements
-    result = map (\v -> read v :: Int) $ splitOn "-" $ head $ splitOn " " s
-    c = head $ last $ splitOn " " s
+parseRange :: String -> Maybe (Int, Int)
+parseRange s = case splitOn " " s of
+  (range : _) -> case splitOn "-" range of
+    (x : y : _) -> Just (read x :: Int, read y :: Int)
+    _ -> Nothing
+  _ -> Nothing
 
-parseRow :: String -> (Policy, Password)
-parseRow s = (parsePolicy policyString, parsePassword password)
+parseChar :: String -> Maybe Char
+parseChar s = case splitOn " " s of
+  (_ : rest : _) -> case rest of
+    (c : _) -> Just c
+    _ -> Nothing
+
+parsePassword :: String -> Maybe String
+parsePassword s = case splitOn ":" s of
+  (_ : password : _) -> Just (trim password)
+  _ -> Nothing
+
+parsePolicyAndPassword :: String -> Maybe (Policy, Password)
+parsePolicyAndPassword s = result
   where
-    policyString = head $ splitOn ":" s
-    password = last $ splitOn ":" s
+    range = parseRange s
+    char = parseChar s
+    password = parsePassword s
+    result = case range of
+      Just (min, max) -> case char of
+        Just c -> case password of
+          Just p -> Just (Policy {policyMin = min, policyMax = max, policyChar = c}, p)
+          _ -> Nothing
+        Nothing -> Nothing
 
 isValidA :: (Policy, Password) -> Bool
-isValidA (policy, password) = numOfC >= getMin policy && numOfC <= getMax policy
+isValidA (policy, password) = count >= policyMin policy && count <= policyMax policy
   where
-    numOfC = length $ filter (\c -> c == getC policy) password
+    count = length $ filter (\c -> c == policyChar policy) password
 
 isValidB :: (Policy, Password) -> Bool
-isValidB (policy, password) = (== 1) $ length $ filter (== getC policy) [charAtFirst, charAtSecond]
+isValidB (policy, password) = (== 1) $ length $ filter (== policyChar policy) [charAtFirst, charAtSecond]
   where
     -- todo: unsafe index usage
-    charAtFirst = password !! (getMin policy - 1)
-    charAtSecond = password !! (getMax policy - 1)
+    charAtFirst = password !! (policyMin policy - 1)
+    charAtSecond = password !! (policyMax policy - 1)
 
 solveA :: String -> String
-solveA s = show $ length $ filter isValidA $ map parseRow $ lines s
+solveA s = show $ length $ filter isValidA $ catMaybes $ parsePolicyAndPassword <$> lines s
 
 solveB :: String -> String
-solveB s = show $ length $ filter isValidB $ map parseRow $ lines s
+solveB s = show $ length $ filter isValidB $ catMaybes $ parsePolicyAndPassword <$> lines s
