@@ -7,11 +7,11 @@ import qualified Data.Set as S
 import Text.Read (readMaybe)
 import Util (splitOn)
 
-type Passport = M.HashMap String String
+type PassportData = M.HashMap String String
 
 data EyeColor = AMB | BLU | BRN | GRY | GRN | HZL | OTH deriving (Show)
 
-data ValidPassport = ValidPassport
+data Passport = Passport
   { byr :: Int,
     iyr :: Int,
     eyr :: Int,
@@ -26,10 +26,8 @@ parseKeyValue v = case splitOn ":" v of
   [k, v] -> Just (k, v)
   _ -> Nothing
 
-parsePassports :: String -> [Passport]
-parsePassports input = raw
-  where
-    raw = map (M.fromList . (mapMaybe parseKeyValue . words)) (splitOn "\n\n" input)
+parsePassportData :: String -> [PassportData]
+parsePassportData input = map (M.fromList . (mapMaybe parseKeyValue . words)) (splitOn "\n\n" input)
 
 parseNumber :: Int -> Int -> String -> Maybe Int
 parseNumber min max s = case (readMaybe s :: Maybe Int) of
@@ -41,11 +39,11 @@ parseHeight [a, b, c, 'c', 'm'] = parseNumber 150 193 [a, b, c]
 parseHeight [a, b, 'i', 'n'] = parseNumber 59 76 [a, b]
 parseHeight _ = Nothing
 
-parseHex :: String -> Maybe String
-parseHex s = if all ((== True) . isHexDigit) s then Just s else Nothing
+parseHexString :: String -> Maybe String
+parseHexString s = if all ((== True) . isHexDigit) s then Just s else Nothing
 
 parseColor :: String -> Maybe String
-parseColor ['#', a, b, c, d, e, f] = parseHex [a, b, c, d, e, f]
+parseColor ['#', a, b, c, d, e, f] = parseHexString [a, b, c, d, e, f]
 parseColor _ = Nothing
 
 parseEyeColor :: String -> Maybe EyeColor
@@ -61,14 +59,14 @@ parseEyeColor _ = Nothing
 parsePassportId :: String -> Maybe String
 parsePassportId s = if length s == 9 && all ((== True) . isDigit) s then Just s else Nothing
 
-isValidA :: Passport -> Bool
-isValidA passport = all ((== True) . (`elem` foundKeys)) requiredKeys
+hasRequiredFields :: PassportData -> Bool
+hasRequiredFields passport = all ((== True) . (`elem` foundKeys)) requiredKeys
   where
     requiredKeys = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]
     foundKeys = S.fromList $ M.keys passport
 
-parseValidPassport :: Passport -> Maybe ValidPassport
-parseValidPassport s = do
+parsePassport :: PassportData -> Maybe Passport
+parsePassport s = do
   byr <- parseNumber 1920 2002 =<< M.lookup "byr" s
   iyr <- parseNumber 2010 2020 =<< M.lookup "iyr" s
   eyr <- parseNumber 2020 2030 =<< M.lookup "eyr" s
@@ -77,7 +75,7 @@ parseValidPassport s = do
   ecl <- parseEyeColor =<< M.lookup "ecl" s
   pid <- parsePassportId =<< M.lookup "pid" s
   Just
-    ValidPassport
+    Passport
       { byr = byr,
         iyr = iyr,
         eyr = eyr,
@@ -88,7 +86,7 @@ parseValidPassport s = do
       }
 
 solveA :: String -> String
-solveA s = show $ length $ filter (== True) $ map isValidA $ parsePassports s
+solveA s = show $ length $ filter (== True) $ map hasRequiredFields $ parsePassportData s
 
 solveB :: String -> String
-solveB s = show $ length $ mapMaybe parseValidPassport (parsePassports s)
+solveB s = show $ length $ mapMaybe parsePassport (parsePassportData s)
