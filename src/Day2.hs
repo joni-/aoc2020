@@ -2,6 +2,7 @@ module Day2 where
 
 import Data.Maybe (catMaybes)
 import qualified Data.Text as T
+import Util (splitOn)
 
 data Policy = Policy
   { policyMin :: Int,
@@ -11,9 +12,6 @@ data Policy = Policy
   deriving (Show)
 
 type Password = String
-
-splitOn :: String -> String -> [String]
-splitOn c s = map T.unpack $ T.splitOn (T.pack c) (T.pack s)
 
 trim :: String -> Password
 trim = T.unpack . T.strip . T.pack

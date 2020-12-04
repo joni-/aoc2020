@@ -4,8 +4,8 @@ import Data.Char (isDigit, isHexDigit)
 import qualified Data.HashMap.Strict as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
-import qualified Data.Text as T
 import Text.Read (readMaybe)
+import Util (splitOn)
 
 type Passport = M.HashMap String String
 
@@ -20,9 +20,6 @@ data ValidPassport = ValidPassport
     ecl :: EyeColor,
     pid :: String
   }
-
-splitOn :: String -> String -> [String]
-splitOn c s = map T.unpack $ T.splitOn (T.pack c) (T.pack s)
 
 parseKeyValue :: String -> Maybe (String, String)
 parseKeyValue v = case splitOn ":" v of
