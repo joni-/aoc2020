@@ -2,7 +2,7 @@ module Day4 where
 
 import Data.Char (isDigit, isHexDigit)
 import qualified Data.HashMap.Strict as M
-import Data.Maybe (catMaybes, fromMaybe)
+import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Text.Read (readMaybe)
@@ -32,7 +32,7 @@ parseKeyValue v = case splitOn ":" v of
 parsePassports :: String -> [Passport]
 parsePassports input = raw
   where
-    raw = map M.fromList $ map (\v -> catMaybes $ map parseKeyValue $ words v) $ splitOn "\n\n" input
+    raw = map (M.fromList . (mapMaybe parseKeyValue . words)) (splitOn "\n\n" input)
 
 parseNumber :: Int -> Int -> String -> Maybe Int
 parseNumber min max s = case (readMaybe s :: Maybe Int) of
@@ -45,7 +45,7 @@ parseHeight [a, b, 'i', 'n'] = parseNumber 59 76 [a, b]
 parseHeight _ = Nothing
 
 parseHex :: String -> Maybe String
-parseHex s = if all (== True) $ map isHexDigit s then Just s else Nothing
+parseHex s = if all ((== True) . isHexDigit) s then Just s else Nothing
 
 parseColor :: String -> Maybe String
 parseColor ['#', a, b, c, d, e, f] = parseHex [a, b, c, d, e, f]
@@ -62,52 +62,36 @@ parseEyeColor "oth" = Just OTH
 parseEyeColor _ = Nothing
 
 parsePassportId :: String -> Maybe String
-parsePassportId s = if length s == 9 && all (== True) (map isDigit s) then Just s else Nothing
+parsePassportId s = if length s == 9 && all ((== True) . isDigit) s then Just s else Nothing
 
 isValidA :: Passport -> Bool
-isValidA passport = all (== True) $ map (\k -> k `elem` foundKeys) requiredKeys
+isValidA passport = all ((== True) . (`elem` foundKeys)) requiredKeys
   where
     requiredKeys = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]
     foundKeys = S.fromList $ M.keys passport
 
 parseValidPassport :: Passport -> Maybe ValidPassport
-parseValidPassport s = result
-  where
-    byr = fromMaybe Nothing $ parseNumber 1920 2002 <$> M.lookup "byr" s
-    iyr = fromMaybe Nothing $ parseNumber 2010 2020 <$> M.lookup "iyr" s
-    eyr = fromMaybe Nothing $ parseNumber 2020 2030 <$> M.lookup "eyr" s
-    hgt = fromMaybe Nothing $ parseHeight <$> M.lookup "hgt" s
-    hcl = fromMaybe Nothing $ parseColor <$> M.lookup "hcl" s
-    ecl = fromMaybe Nothing $ parseEyeColor <$> M.lookup "ecl" s
-    pid = fromMaybe Nothing $ parsePassportId <$> M.lookup "pid" s
-    result = case byr of
-      Just byr' -> case iyr of
-        Just iyr' -> case eyr of
-          Just eyr' -> case hgt of
-            Just hgt' -> case hcl of
-              Just hcl' -> case ecl of
-                Just ecl' -> case pid of
-                  Just pid' ->
-                    Just
-                      ValidPassport
-                        { byr = byr',
-                          iyr = iyr',
-                          eyr = eyr',
-                          hgt = hgt',
-                          hcl = hcl',
-                          ecl = ecl',
-                          pid = pid'
-                        }
-                  Nothing -> Nothing
-                Nothing -> Nothing
-              Nothing -> Nothing
-            Nothing -> Nothing
-          Nothing -> Nothing
-        Nothing -> Nothing
-      Nothing -> Nothing
+parseValidPassport s = do
+  byr <- parseNumber 1920 2002 =<< M.lookup "byr" s
+  iyr <- parseNumber 2010 2020 =<< M.lookup "iyr" s
+  eyr <- parseNumber 2020 2030 =<< M.lookup "eyr" s
+  hgt <- parseHeight =<< M.lookup "hgt" s
+  hcl <- parseColor =<< M.lookup "hcl" s
+  ecl <- parseEyeColor =<< M.lookup "ecl" s
+  pid <- parsePassportId =<< M.lookup "pid" s
+  Just
+    ValidPassport
+      { byr = byr,
+        iyr = iyr,
+        eyr = eyr,
+        hgt = hgt,
+        hcl = hcl,
+        ecl = ecl,
+        pid = pid
+      }
 
 solveA :: String -> String
 solveA s = show $ length $ filter (== True) $ map isValidA $ parsePassports s
 
 solveB :: String -> String
-solveB s = show $ length $ catMaybes $ map parseValidPassport $ parsePassports s
+solveB s = show $ length $ mapMaybe parseValidPassport (parsePassports s)
