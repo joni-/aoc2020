@@ -5,6 +5,7 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Day1
 import qualified Day2
 import qualified Day3
+import qualified Day4
 -- start.py import placeholder
 import System.Environment
 
@@ -17,6 +18,8 @@ solveFns =
     , (("2", "B"), Day2.solveB)
     , (("3", "A"), Day3.solveA)
     , (("3", "B"), Day3.solveB)
+    , (("4", "A"), Day4.solveA)
+    , (("4", "B"), Day4.solveB)
     -- start.py placeholder
     ]
 
