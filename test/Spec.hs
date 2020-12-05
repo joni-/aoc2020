@@ -3,6 +3,7 @@ import qualified Day2Test
 import qualified Day3Test
 import qualified Day4Test
 import qualified Day5Test
+import qualified ParserTest
 -- start.py import placeholder
 import Test.Tasty
 
@@ -17,5 +18,6 @@ tests =
     , Day3Test.tests
     , Day4Test.tests
     , Day5Test.tests
+    , ParserTest.tests
     -- start.py test placeholder
     ]
