@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ed9141e0cfda3ee33406b2cdc927e8a4b22b3eefd98b6ba1e061148833f39803
+-- hash: df3f09ec062511b6d7c6ccacfdb87dcaf1c65664ad334138e72b2fbc8cc7afc3
 
 name:           aoc2020
 version:        0.1.0.0
@@ -14,12 +14,10 @@ bug-reports:    https://github.com/githubuser/aoc2020/issues
 author:         Author name here
 maintainer:     example@example.com
 copyright:      2020 Author name here
-license:        BSD3
-license-file:   LICENSE
+license:        MIT
 build-type:     Simple
 extra-source-files:
     README.md
-    ChangeLog.md
 
 source-repository head
   type: git
