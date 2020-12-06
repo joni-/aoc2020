@@ -29,13 +29,20 @@ charP c = Parser f
 stringP :: String -> Parser String
 stringP = traverse charP
 
+notNull :: Parser [a] -> Parser [a]
+notNull (Parser p) = Parser f
+  where
+    f input = do
+      (match, input') <- p input
+      if null match then Nothing else Just (match, input')
+
 spanP :: (Char -> Bool) -> Parser String
 spanP pred = Parser f
   where
     f input = Just (span pred input)
 
 intP :: Parser Int
-intP = fmap read (spanP isDigit)
+intP = fmap read (notNull (spanP isDigit))
 
 parseString :: String -> String -> Maybe (String, String)
 parseString target = runParser $ stringP target

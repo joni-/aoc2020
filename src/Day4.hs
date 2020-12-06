@@ -4,7 +4,7 @@ import Data.Char (isDigit, isHexDigit)
 import qualified Data.HashMap.Strict as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
-import Text.Read (readMaybe)
+import Parser (intP, runParser)
 import Util (splitOn)
 
 type PassportData = M.HashMap String String
@@ -29,14 +29,14 @@ parseKeyValue v = case splitOn ":" v of
 parsePassportData :: String -> [PassportData]
 parsePassportData input = map (M.fromList . (mapMaybe parseKeyValue . words)) (splitOn "\n\n" input)
 
-parseNumber :: Int -> Int -> String -> Maybe Int
-parseNumber min max s = case (readMaybe s :: Maybe Int) of
-  Just x -> if x >= min && x <= max then Just x else Nothing
-  Nothing -> Nothing
+parseBoundedInt :: Int -> Int -> String -> Maybe Int
+parseBoundedInt min max s = do
+  (value, _) <- runParser intP s
+  if value >= min && value <= max then Just value else Nothing
 
 parseHeight :: String -> Maybe Int
-parseHeight [a, b, c, 'c', 'm'] = parseNumber 150 193 [a, b, c]
-parseHeight [a, b, 'i', 'n'] = parseNumber 59 76 [a, b]
+parseHeight [a, b, c, 'c', 'm'] = parseBoundedInt 150 193 [a, b, c]
+parseHeight [a, b, 'i', 'n'] = parseBoundedInt 59 76 [a, b]
 parseHeight _ = Nothing
 
 parseHexString :: String -> Maybe String
@@ -67,9 +67,9 @@ hasRequiredFields passport = all ((== True) . (`elem` foundKeys)) requiredKeys
 
 parsePassport :: PassportData -> Maybe Passport
 parsePassport s = do
-  byr <- parseNumber 1920 2002 =<< M.lookup "byr" s
-  iyr <- parseNumber 2010 2020 =<< M.lookup "iyr" s
-  eyr <- parseNumber 2020 2030 =<< M.lookup "eyr" s
+  byr <- parseBoundedInt 1920 2002 =<< M.lookup "byr" s
+  iyr <- parseBoundedInt 2010 2020 =<< M.lookup "iyr" s
+  eyr <- parseBoundedInt 2020 2030 =<< M.lookup "eyr" s
   hgt <- parseHeight =<< M.lookup "hgt" s
   hcl <- parseColor =<< M.lookup "hcl" s
   ecl <- parseEyeColor =<< M.lookup "ecl" s
