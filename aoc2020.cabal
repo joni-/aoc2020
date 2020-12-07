@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: df3f09ec062511b6d7c6ccacfdb87dcaf1c65664ad334138e72b2fbc8cc7afc3
+-- hash: 19fd1c1a44133d1d4616470b362436d460ec4f54171428707a56ff3978d3d41e
 
 name:           aoc2020
 version:        0.1.0.0
@@ -14,7 +14,7 @@ bug-reports:    https://github.com/githubuser/aoc2020/issues
 author:         Author name here
 maintainer:     example@example.com
 copyright:      2020 Author name here
-license:        MIT
+license:        BSD3
 build-type:     Simple
 extra-source-files:
     README.md
@@ -31,9 +31,9 @@ library
       Day4
       Day5
       Day6
+      Day7
       Parser
       Util
-      Day7
   other-modules:
       Paths_aoc2020
   hs-source-dirs:
@@ -41,6 +41,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , hashable
     , text
     , unordered-containers
   default-language: Haskell2010
@@ -56,6 +57,7 @@ executable aoc2020-exe
       aoc2020
     , base >=4.7 && <5
     , containers
+    , hashable
     , text
     , unordered-containers
   default-language: Haskell2010
@@ -70,6 +72,7 @@ test-suite aoc2020-test
       Day4Test
       Day5Test
       Day6Test
+      Day7Test
       ParserTest
       Paths_aoc2020
   hs-source-dirs:
@@ -79,6 +82,7 @@ test-suite aoc2020-test
       aoc2020
     , base >=4.7 && <5
     , containers
+    , hashable
     , tasty
     , tasty-hunit
     , tasty-quickcheck
