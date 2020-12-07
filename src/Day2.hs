@@ -1,8 +1,7 @@
 module Day2 where
 
 import Data.Maybe (catMaybes)
-import qualified Data.Text as T
-import Util (splitOn)
+import Util (splitOn, trim)
 
 data Policy = Policy
   { policyMin :: Int,
@@ -12,9 +11,6 @@ data Policy = Policy
   deriving (Show)
 
 type Password = String
-
-trim :: String -> Password
-trim = T.unpack . T.strip . T.pack
 
 parseRange :: String -> Maybe (Int, Int)
 parseRange s = case splitOn " " s of

@@ -33,6 +33,7 @@ library
       Day6
       Parser
       Util
+      Day7
   other-modules:
       Paths_aoc2020
   hs-source-dirs:
