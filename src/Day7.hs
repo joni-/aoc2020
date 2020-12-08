@@ -2,7 +2,6 @@ module Day7 where
 
 import qualified Data.HashMap.Strict as M
 import Data.Hashable
-import qualified Data.Set as S
 import Util (splitOn, trim)
 
 data Bag = Bag {count :: Int, color :: String} deriving (Show)
@@ -16,40 +15,39 @@ instance Ord Bag where
 instance Hashable Bag where
   hashWithSalt salt bag = hashWithSalt salt $ color bag
 
--- input =
---   "light red bags contain 1 bright white bag, 2 muted yellow bags.\n\
---   \dark orange bags contain 3 bright white bags, 4 muted yellow bags.\n\
---   \bright white bags contain 1 shiny gold bag.\n\
---   \muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.\n\
---   \shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.\n\
---   \dark olive bags contain 3 faded blue bags, 4 dotted black bags.\n\
---   \vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.\n\
---   \faded blue bags contain no other bags.\n\
---   \dotted black bags contain no other bags."
-
 -- todo: unsafe indexing
 createBag :: [String] -> Bag
+createBag ["no", "other", "bags."] = Bag {count = 0, color = "empty"}
 createBag (countS : adjective : color : _) = Bag {count = read countS, color = adjective ++ " " ++ color}
 createBag [adjective, color] = Bag {count = 0, color = adjective ++ " " ++ color}
 
 parseContent :: String -> [Bag]
 parseContent s =
   map
-    (createBag . words)
-    (filter (/= "no other bags.") $ map trim $ splitOn "," $ trim $ last $ splitOn "contain" s)
+    ((createBag . words) . trim)
+    (splitOn "," $ trim $ last $ splitOn "contain" s)
 
-parseRow :: String -> (Bag, S.Set Bag)
+parseRow :: String -> (Bag, [Bag])
 parseRow s = (bag, contents)
   where
     bag = createBag $ take 2 $ words s -- unsafe
-    contents = S.fromList $ parseContent s
+    contents = parseContent s
 
-isValidOutermostBag :: Bag -> M.HashMap Bag (S.Set Bag) -> Bag -> Bool
+isValidOutermostBag :: Bag -> M.HashMap Bag [Bag] -> Bag -> Bool
 isValidOutermostBag target bags bag = target /= bag && isNeighbor
   where
-    neighbors = M.lookupDefault S.empty bag bags
+    neighbors = M.lookupDefault [] bag bags
     -- is target is direct neighbor of bag?
     isNeighbor = target `elem` neighbors || any (isValidOutermostBag target bags) neighbors
+
+findBagCount :: M.HashMap Bag [Bag] -> Bag -> Int -> Int
+-- if neighbors is empty, then return accumulator
+findBagCount bags currentBag accumulator = if null contents then 1 else f
+  where
+    contents = M.lookupDefault [] currentBag bags
+    sumOfContents = sum $ map (\bag -> count bag * findBagCount bags bag accumulator) contents
+    -- count bag count for each of the bags inside this bag and then return their sum + accumulator
+    f = accumulator + sumOfContents
 
 solveA :: String -> String
 solveA s = show $ length $ filter (isValidOutermostBag Bag {count = 0, color = "shiny gold"} bags) $ M.keys bags
@@ -57,4 +55,7 @@ solveA s = show $ length $ filter (isValidOutermostBag Bag {count = 0, color = "
     bags = M.fromList $ map parseRow $ lines s
 
 solveB :: String -> String
-solveB s = s
+solveB s = show $ (\v -> v - 1) $ findBagCount bags shinyGold 1
+  where
+    bags = M.fromList $ map parseRow $ lines s
+    shinyGold = Bag {count = 0, color = "shiny gold"}
