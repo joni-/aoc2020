@@ -3,9 +3,7 @@ module Day1 where
 import Data.List
 import Data.Maybe
 import qualified Data.Set as Set
-
-showJust :: Show a => Maybe a -> String
-showJust = show . fromJust
+import Util (showJust)
 
 -- Find the two elements that sum to given target
 findSumElements :: Int -> [Int] -> Maybe (Int, Int)
