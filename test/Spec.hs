@@ -9,6 +9,7 @@ import qualified Day7Test
 import qualified Day8Test
 import qualified Day9Test
 import qualified Day10Test
+import qualified Day11Test
 -- start.py import placeholder
 import Test.Tasty
 
@@ -29,5 +30,6 @@ tests =
     , Day8Test.tests
     , Day9Test.tests
     , Day10Test.tests
+    , Day11Test.tests
     -- start.py test placeholder
     ]
