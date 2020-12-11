@@ -7,18 +7,6 @@ type Coord = (Int, Int)
 
 data State = Empty | Occupied | Floor deriving (Show, Eq)
 
-input' =
-  "L.LL.LL.LL\n\
-  \LLLLLLL.LL\n\
-  \L.L.L..L..\n\
-  \LLLL.LL.LL\n\
-  \L.LL.LL.LL\n\
-  \L.LLLLL.LL\n\
-  \..L.L.....\n\
-  \LLLLLLLLLL\n\
-  \L.LLLLLL.L\n\
-  \L.LLLLL.LL"
-
 toState :: Char -> State
 toState 'L' = Empty
 toState '#' = Occupied
@@ -31,38 +19,83 @@ parseLayout input = Map.fromList vs
     parseLine row s = map (\(char, col) -> ((row, col), toState char)) $ zip s [0 ..]
     vs = concat $ map (\(line, row) -> parseLine row line) $ zip (lines input) [0 ..]
 
+goUp :: Coord -> Coord
+goUp (x, y) = (x, y - 1)
+
+goTopRight :: Coord -> Coord
+goTopRight (x, y) = (x + 1, y - 1)
+
+goRight :: Coord -> Coord
+goRight (x, y) = (x + 1, y)
+
+goBottomRight :: Coord -> Coord
+goBottomRight (x, y) = (x + 1, y + 1)
+
+goBottom :: Coord -> Coord
+goBottom (x, y) = (x, y + 1)
+
+goBottomLeft :: Coord -> Coord
+goBottomLeft (x, y) = (x - 1, y + 1)
+
+goLeft :: Coord -> Coord
+goLeft (x, y) = (x - 1, y)
+
+goTopLeft :: Coord -> Coord
+goTopLeft (x, y) = (x - 1, y - 1)
+
 adjacentSeats :: Map.HashMap Coord State -> Coord -> [State]
-adjacentSeats layout (x, y) = catMaybes [up, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft]
+adjacentSeats layout coord = catMaybes [up, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft]
   where
-    up = Map.lookup (x, y - 1) layout
-    topRight = Map.lookup (x + 1, y - 1) layout
-    right = Map.lookup (x + 1, y) layout
-    bottomRight = Map.lookup (x + 1, y + 1) layout
-    bottom = Map.lookup (x, y + 1) layout
-    bottomLeft = Map.lookup (x - 1, y + 1) layout
-    left = Map.lookup (x - 1, y) layout
-    topLeft = Map.lookup (x - 1, y - 1) layout
+    up = Map.lookup (goUp coord) layout
+    topRight = Map.lookup (goTopRight coord) layout
+    right = Map.lookup (goRight coord) layout
+    bottomRight = Map.lookup (goBottomRight coord) layout
+    bottom = Map.lookup (goBottom coord) layout
+    bottomLeft = Map.lookup (goBottomLeft coord) layout
+    left = Map.lookup (goLeft coord) layout
+    topLeft = Map.lookup (goTopLeft coord) layout
 
-newState :: State -> [State] -> State
-newState Empty adjacent = if Occupied `notElem` adjacent then Occupied else Empty
-newState Occupied adjacent = if length (filter (== Occupied) adjacent) >= 4 then Empty else Occupied
-newState state _ = state
+firstSeat :: Map.HashMap Coord State -> (Coord -> Coord) -> Coord -> Maybe State
+firstSeat layout updateCoord coordinate = case Map.lookup (updateCoord coordinate) layout of
+  Just Floor -> firstSeat layout updateCoord (updateCoord coordinate)
+  Just Empty -> Just Empty
+  Just Occupied -> Just Occupied
+  Nothing -> Nothing
 
-updateLayout :: Map.HashMap Coord State -> Map.HashMap Coord State
-updateLayout layout = f
+visibleSeats :: Map.HashMap Coord State -> Coord -> [State]
+visibleSeats layout coord = catMaybes [up, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft]
+  where
+    up = firstSeat layout goUp coord
+    topRight = firstSeat layout goTopRight coord
+    right = firstSeat layout goRight coord
+    bottomRight = firstSeat layout goBottomRight coord
+    bottom = firstSeat layout goBottom coord
+    bottomLeft = firstSeat layout goBottomLeft coord
+    left = firstSeat layout goLeft coord
+    topLeft = firstSeat layout goTopLeft coord
+
+newState :: Int -> State -> [State] -> State
+newState _ Empty adjacent = if Occupied `notElem` adjacent then Occupied else Empty
+newState tolerance Occupied adjacent = if length (filter (== Occupied) adjacent) >= tolerance then Empty else Occupied
+newState _ state _ = state
+
+updateLayout :: Int -> Map.HashMap Coord State -> (Map.HashMap Coord State -> Coord -> [State]) -> Map.HashMap Coord State
+updateLayout tolerance layout updateFn = f
   where
     seats = Map.keys layout
-    f = foldl (\layout' seat -> Map.insert seat (newState (Map.lookupDefault Floor seat layout) (adjacentSeats layout seat)) layout') layout seats
+    f = foldl (\layout' seat -> Map.insert seat (newState tolerance (Map.lookupDefault Floor seat layout) (updateFn layout seat)) layout') layout seats
 
-iter :: Map.HashMap Coord State -> Map.HashMap Coord State
-iter layout = if layout == nextLayout then layout else iter nextLayout
+iter :: Int -> Map.HashMap Coord State -> (Map.HashMap Coord State -> Coord -> [State]) -> Map.HashMap Coord State
+iter tolerance layout updateFn = if layout == nextLayout then layout else iter tolerance nextLayout updateFn
   where
-    nextLayout = updateLayout layout
+    nextLayout = updateLayout tolerance layout updateFn
 
 solveA :: String -> String
 solveA s = show $ length $ filter (== Occupied) $ map snd $ Map.toList finalState
   where
-    finalState = iter (parseLayout s)
+    finalState = iter 4 (parseLayout s) adjacentSeats
 
 solveB :: String -> String
-solveB s = s
+solveB s = show $ length $ filter (== Occupied) $ map snd $ Map.toList finalState
+  where
+    finalState = iter 5 (parseLayout s) visibleSeats
