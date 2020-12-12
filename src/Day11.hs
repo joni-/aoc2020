@@ -58,9 +58,7 @@ adjacentSeats layout coord = catMaybes [up, topRight, right, bottomRight, bottom
 firstSeat :: Map.HashMap Coord State -> (Coord -> Coord) -> Coord -> Maybe State
 firstSeat layout updateCoord coordinate = case Map.lookup (updateCoord coordinate) layout of
   Just Floor -> firstSeat layout updateCoord (updateCoord coordinate)
-  Just Empty -> Just Empty
-  Just Occupied -> Just Occupied
-  Nothing -> Nothing
+  value -> value
 
 visibleSeats :: Map.HashMap Coord State -> Coord -> [State]
 visibleSeats layout coord = catMaybes [up, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft]
