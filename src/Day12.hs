@@ -49,6 +49,30 @@ move orientation (OrientationAction South value) (x, y) = ((x, y + value), orien
 move orientation (OrientationAction West value) (x, y) = ((x - value, y), orientation)
 move orientation (DirectionAction action value) coordinate = (coordinate, turn orientation (DirectionAction action value))
 
+rotateClockwise :: Int -> Coordinate -> Coordinate
+rotateClockwise 90 (x, y) = (negate y, x)
+rotateClockwise 180 (x, y) = (negate x, negate y)
+rotateClockwise 270 (x, y) = (y, negate x)
+rotateClockwise 370 (x, y) = (x, y)
+
+rotateCounterClockwise :: Int -> Coordinate -> Coordinate
+rotateCounterClockwise 90 (x, y) = (y, negate x)
+rotateCounterClockwise 180 (x, y) = (negate x, negate y)
+rotateCounterClockwise 270 (x, y) = (negate y, x)
+rotateCounterClockwise 370 (x, y) = (x, y)
+
+move' :: Action -> Coordinate -> Coordinate -> (Coordinate, Coordinate)
+move' (DirectionAction Forward value) (shipX, shipY) (waypointX, waypointY) = ((shipX', shipY'), (waypointX, waypointY))
+  where
+    shipX' = shipX + value * waypointX
+    shipY' = shipY + value * waypointY
+move' (OrientationAction North value) (shipX, shipY) (waypointX, waypointY) = ((shipX, shipY), (waypointX, waypointY - value))
+move' (OrientationAction East value) (shipX, shipY) (waypointX, waypointY) = ((shipX, shipY), (waypointX + value, waypointY))
+move' (OrientationAction South value) (shipX, shipY) (waypointX, waypointY) = ((shipX, shipY), (waypointX, waypointY + value))
+move' (OrientationAction West value) (shipX, shipY) (waypointX, waypointY) = ((shipX, shipY), (waypointX - value, waypointY))
+move' (DirectionAction Day12.Left degrees) shipCoord waypointCoord = (shipCoord, rotateCounterClockwise degrees waypointCoord)
+move' (DirectionAction Day12.Right degrees) shipCoord waypointCoord = (shipCoord, rotateClockwise degrees waypointCoord)
+
 parseAction :: String -> Action
 parseAction ('N' : value) = OrientationAction North (read value)
 parseAction ('S' : value) = OrientationAction South (read value)
@@ -58,13 +82,6 @@ parseAction ('L' : value) = DirectionAction Day12.Left (capDegrees $ read value)
 parseAction ('R' : value) = DirectionAction Day12.Right (capDegrees $ read value)
 parseAction ('F' : value) = DirectionAction Forward (read value)
 
-input =
-  "F10\n\
-  \N3\n\
-  \F7\n\
-  \R90\n\
-  \F11"
-
 solveA :: String -> String
 solveA s = show $ abs (x + y)
   where
@@ -72,4 +89,7 @@ solveA s = show $ abs (x + y)
     ((x, y), _) = foldl (\(coordinate, orientation) action -> move orientation action coordinate) ((0, 0), East) actions
 
 solveB :: String -> String
-solveB s = s
+solveB s = show $ abs (x + y)
+  where
+    actions = map parseAction $ lines s
+    ((x, y), _) = foldl (\(shipCoord, waypointCoord) action -> move' action shipCoord waypointCoord) ((0, 0), (10, -1)) actions
