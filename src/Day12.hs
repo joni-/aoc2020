@@ -11,41 +11,31 @@ data Action = DirectionAction Direction Int | OrientationAction Orientation Int 
 capDegrees :: Int -> Int
 capDegrees v = v `mod` 360
 
-turnDegrees :: Orientation -> Direction -> Int -> Orientation
-turnDegrees North Day12.Left 90 = West
-turnDegrees North Day12.Left 180 = South
-turnDegrees North Day12.Left 270 = East
-turnDegrees East Day12.Left 90 = North
-turnDegrees East Day12.Left 180 = West
-turnDegrees East Day12.Left 270 = South
-turnDegrees South Day12.Left 90 = East
-turnDegrees South Day12.Left 180 = North
-turnDegrees South Day12.Left 270 = West
-turnDegrees West Day12.Left 90 = South
-turnDegrees West Day12.Left 180 = East
-turnDegrees West Day12.Left 270 = North
-turnDegrees North Day12.Right 90 = East
-turnDegrees North Day12.Right 180 = South
-turnDegrees North Day12.Right 270 = West
-turnDegrees East Day12.Right 90 = South
-turnDegrees East Day12.Right 180 = West
-turnDegrees East Day12.Right 270 = North
-turnDegrees South Day12.Right 90 = West
-turnDegrees South Day12.Right 180 = North
-turnDegrees South Day12.Right 270 = East
-turnDegrees West Day12.Right 90 = North
-turnDegrees West Day12.Right 180 = East
-turnDegrees West Day12.Right 270 = South
+next :: Orientation -> Orientation
+next North = East
+next East = South
+next South = West
+next West = North
+
+clockwiseSteps :: Int -> Int
+clockwiseSteps degrees = round (fromInteger (toInteger degrees) / 360 * 4) `mod` 4
+
+counterClockwiseSteps :: Int -> Int
+counterClockwiseSteps degrees = 4 - clockwiseSteps degrees
+
+turnCounterClockwise :: Int -> Orientation -> Orientation
+turnCounterClockwise degrees orientation = take steps (drop 1 $ iterate next orientation) !! max 0 (steps - 1)
+  where
+    steps = counterClockwiseSteps degrees
+
+turnClockwise :: Int -> Orientation -> Orientation
+turnClockwise degrees orientation = take steps (drop 1 $ iterate next orientation) !! max 0 (steps - 1)
+  where
+    steps = clockwiseSteps degrees
 
 turn :: Orientation -> Action -> Orientation
-turn North (DirectionAction Day12.Left value) = turnDegrees North Day12.Left value
-turn North (DirectionAction Day12.Right value) = turnDegrees North Day12.Right value
-turn East (DirectionAction Day12.Left value) = turnDegrees East Day12.Left value
-turn East (DirectionAction Day12.Right value) = turnDegrees East Day12.Right value
-turn South (DirectionAction Day12.Left value) = turnDegrees South Day12.Left value
-turn South (DirectionAction Day12.Right value) = turnDegrees South Day12.Right value
-turn West (DirectionAction Day12.Left value) = turnDegrees West Day12.Left value
-turn West (DirectionAction Day12.Right value) = turnDegrees West Day12.Right value
+turn orientation (DirectionAction Day12.Left degrees) = turnCounterClockwise degrees orientation
+turn orientation (DirectionAction Day12.Right degrees) = turnClockwise degrees orientation
 turn orientation _ = orientation
 
 move :: Orientation -> Action -> Coordinate -> (Coordinate, Orientation)
