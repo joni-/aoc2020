@@ -12,5 +12,5 @@ tests =
   testGroup
     "Day13"
     [ testCase "solveA" $ solveA input @?= "295",
-      testCase "solveB" $ solveB "hello" @?= "hello"
+      testCase "solveB" $ solveB input @?= "1068781"
     ]

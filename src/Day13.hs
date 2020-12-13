@@ -1,8 +1,8 @@
 module Day13 where
 
-import Data.List (minimumBy)
+import Data.List (find, minimumBy)
 import Data.Ord (comparing)
-import Util (splitOn)
+import Util (showJust, splitOn)
 
 input' =
   "939\n\
@@ -13,6 +13,9 @@ parseTarget input = read $ head $ lines input
 
 parseBusIds :: String -> [Int]
 parseBusIds input = map read $ filter (/= "x") $ splitOn "," $ last $ lines input
+
+parseBusIdsB :: String -> [(Int, Int)]
+parseBusIdsB input = map (\(v, i) -> (read v :: Int, i)) $ filter (\(v, _) -> v /= "x") $ zip (splitOn "," $ last $ lines input) [0 ..]
 
 earliestDeparts :: Int -> [Int] -> [(Int, Int)]
 earliestDeparts target busIds = map f busIds
@@ -33,5 +36,19 @@ solveA s = show $ busId * wait
     (busId, depart) = earliestDepart $ earliestDeparts target busIds
     wait = depart - target
 
+matches :: [(Integer, Integer)] -> Integer -> Bool
+matches busIds tick = all (== 0) (map (\(busId, index) -> (tick + index) `mod` busId) busIds)
+
+findTicks :: (Integer, Integer) -> (Integer, Integer) -> [Integer]
+findTicks (firstId, _) (lastId, lastIndex) = [tick - lastIndex | tick <- [1 ..], tick `mod` firstId == 0 && tick `mod` lastId == 0]
+
+-- findTicks (firstId, firstIndex) (lastId, lastIndex) currentTick ticks = if firstMatch && lastMatch then findTicks (firstId, firstIndex) (lastId, lastIndex) (currentTick + 1) (currentTick : ticks) else findTicks (firstId, firstIndex) (lastId, lastIndex) (currentTick + 1) ticks
+--   where
+--     lastMatch = currentTick `mod` lastId == 0
+--     firstMatch = currentTick `mod` firstId == 0
+
 solveB :: String -> String
-solveB s = s
+solveB s = showJust match
+  where
+    busIds = map (\(a, b) -> (toInteger a, toInteger b)) $ parseBusIdsB s
+    match = find (matches busIds) $ findTicks (head busIds) (last busIds)
