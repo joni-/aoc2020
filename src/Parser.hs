@@ -44,6 +44,9 @@ spanP pred = Parser f
 intP :: Parser Int
 intP = fmap read (notNull (spanP isDigit))
 
+parseInt :: String -> Maybe (Int, String)
+parseInt = runParser intP
+
 parseString :: String -> String -> Maybe (String, String)
 parseString target = runParser $ stringP target
 
