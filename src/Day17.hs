@@ -2,27 +2,32 @@ module Day17 where
 
 import Control.Monad (replicateM)
 import qualified Data.HashMap.Strict as M
+import Data.Hashable
 
-type Coordinate3D = (Int, Int, Int)
+data PDCoordinate = Coordinate3D (Int, Int, Int) | Coordinate4D (Int, Int, Int, Int) deriving (Show, Eq)
 
 data CubeState = Active | Inactive deriving (Show, Eq)
 
-type PocketDimension = M.HashMap Coordinate3D CubeState
+type PocketDimension = M.HashMap PDCoordinate CubeState
 
-input =
-  ".#.\n\
-  \..#\n\
-  \###"
+instance Hashable PDCoordinate where
+  hashWithSalt salt (Coordinate3D t) = hashWithSalt salt t
+  hashWithSalt salt (Coordinate4D t) = hashWithSalt salt t
 
 parseInitialState :: String -> PocketDimension
-parseInitialState input = M.fromList $ concatMap (\(line, row) -> map (\(state, col) -> ((row, col, 0), if state == '#' then Active else Inactive)) $ zip line [0 ..]) $ zip (lines input) [0 ..]
+parseInitialState input = M.fromList $ concatMap (\(line, row) -> map (\(state, col) -> (Coordinate3D (row, col, 0), if state == '#' then Active else Inactive)) $ zip line [0 ..]) $ zip (lines input) [0 ..]
 
-neighborCoordinates :: Coordinate3D -> [Coordinate3D]
-neighborCoordinates (x, y, z) = map (\[x', y', z'] -> (x + x', y + y', z + z')) relativeIndices
+parseInitialState4D :: String -> PocketDimension
+parseInitialState4D input = M.fromList $ concatMap (\(line, row) -> map (\(state, col) -> (Coordinate4D (row, col, 0, 0), if state == '#' then Active else Inactive)) $ zip line [0 ..]) $ zip (lines input) [0 ..]
+
+neighborCoordinates :: PDCoordinate -> [PDCoordinate]
+neighborCoordinates c = case c of
+  Coordinate3D (x, y, z) -> map (Coordinate3D . (\[x', y', z'] -> (x + x', y + y', z + z'))) (relativeIndices 3)
+  Coordinate4D (x, y, z, v) -> map (Coordinate4D . (\[x', y', z', v'] -> (x + x', y + y', z + z', v + v'))) (relativeIndices 4)
   where
-    relativeIndices = filter (/= [0, 0, 0]) $ replicateM 3 [-1, 0, 1]
+    relativeIndices n = filter (not . all (== 0)) $ replicateM n [-1, 0, 1]
 
-getNewState :: PocketDimension -> Coordinate3D -> CubeState
+getNewState :: PocketDimension -> PDCoordinate -> CubeState
 getNewState state coordinate = case currentState of
   Active -> if activeNeighbors == 2 || activeNeighbors == 3 then Active else Inactive
   Inactive -> if activeNeighbors == 3 then Active else Inactive
@@ -46,4 +51,6 @@ solveA s = show $ length $ M.filter (== Active) $ cycleTimes 6 0 initialState
     initialState = parseInitialState s
 
 solveB :: String -> String
-solveB s = s
+solveB s = show $ length $ M.filter (== Active) $ cycleTimes 6 0 initialState
+  where
+    initialState = parseInitialState4D s

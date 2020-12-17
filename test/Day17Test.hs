@@ -4,9 +4,13 @@ import Day17
 import Test.Tasty
 import Test.Tasty.HUnit (testCase, (@?=))
 
+input =
+  ".#.\n\
+  \..#\n\
+  \###"
+
 tests =
   testGroup
     "Day17"
-    [ testCase "solveA" $ solveA "hello" @?= "hello",
-      testCase "solveB" $ solveB "hello" @?= "hello"
+    [ testCase "solveA" $ solveA input @?= "112"
     ]
