@@ -20,6 +20,7 @@ import qualified Day15
 import qualified Day16
 import qualified Day17
 import qualified Day20
+import qualified Day21
 -- start.py import placeholder
 import System.Environment
 
@@ -62,6 +63,8 @@ solveFns =
     , (("17", "B"), Day17.solveB)
     , (("20", "A"), Day20.solveA)
     , (("20", "B"), Day20.solveB)
+    , (("21", "A"), Day21.solveA)
+    , (("21", "B"), Day21.solveB)
     -- start.py placeholder
     ]
 
