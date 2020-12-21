@@ -1,17 +1,12 @@
 module Day21 where
 
 import qualified Data.HashMap.Strict as M
+import Data.List (intercalate, sortBy)
 import Data.Maybe (mapMaybe)
+import Data.Ord (comparing)
 import qualified Data.Set as Set
 import Parser (between, until)
 import Util (replace, splitOn, trim)
-
--- input :: String
--- input =
---   "mxmxvkd kfcds sqjhc nhms (contains dairy, fish)\n\
---   \trh fvjkl sbzzf mxmxvkd (contains dairy)\n\
---   \sqjhc fvjkl (contains soy)\n\
---   \sqjhc mxmxvkd sbzzf (contains fish)"
 
 type Allergen = String
 
@@ -33,6 +28,15 @@ findPossibilities = foldl f M.empty
   where
     f acc (ingredients, allergens) = foldl (\acc' allergent -> M.insertWith Set.intersection allergent (Set.fromList ingredients) acc') acc allergens
 
+matchAllergenToIngredient :: M.HashMap Allergen (Set.Set Ingredient) -> [(Allergen, Ingredient)] -> [(Allergen, Ingredient)]
+matchAllergenToIngredient possibilities acc = if null possibilities then acc else f
+  where
+    found = M.foldrWithKey (\k v acc' -> if Set.size v == 1 then acc' ++ [(k, Set.elemAt 0 v)] else acc') acc possibilities
+    mm = foldr (\(allergen, _) acc' -> M.delete allergen acc') possibilities found
+    foundIngredients = Set.fromList $ map snd found
+    nn = M.map (`Set.difference` foundIngredients) mm
+    f = matchAllergenToIngredient nn found
+
 solveA :: String -> String
 solveA s = show $ sum ff
   where
@@ -44,4 +48,9 @@ solveA s = show $ sum ff
     ff = map (`count` ingredients) (Set.toList nonAllergicIngredients)
 
 solveB :: String -> String
-solveB s = s
+solveB s = intercalate "," $ map snd $ sortBy (comparing fst) matches
+  where
+    foods = parseInput s
+    ingredients = concatMap fst foods
+    possibilities = findPossibilities foods
+    matches = matchAllergenToIngredient possibilities []
