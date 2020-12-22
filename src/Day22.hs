@@ -1,5 +1,6 @@
 module Day22 where
 
+import qualified Data.Set as Set
 import Util (splitOn)
 
 input' =
@@ -32,6 +33,25 @@ play (deck1, deck2) = if null deck1 || null deck2 then (deck1, deck2) else play 
     deck1' = if c1 > c2 then tail deck1 ++ [c1, c2] else tail deck1
     deck2' = if c2 > c1 then tail deck2 ++ [c2, c1] else tail deck2
 
+playGame :: ([Int], [Int]) -> ([Int], [Int])
+playGame decks@(deck1, deck2) = if null deck1 || null deck2 then decks else playRound Set.empty decks
+
+playRound :: Set.Set ([Int], [Int]) -> ([Int], [Int]) -> ([Int], [Int])
+playRound previousStartingDecks decks@(deck1, deck2) = if null deck1 || null deck2 || decks `Set.member` previousStartingDecks then decks else f decks
+  where
+    f (c1 : deck1', c2 : deck2') =
+      if length deck1' >= c1 && length deck2' >= c2
+        then case playGame (take c1 deck1', take c2 deck2') of
+          (_, []) -> playRound (Set.insert decks previousStartingDecks) (deck1' ++ [c1, c2], deck2')
+          ([], p2) -> playRound (Set.insert decks previousStartingDecks) (deck1', deck2' ++ [c2, c1])
+          -- found duplicate starting hands -> player 1 won
+          _ -> playRound (Set.insert decks previousStartingDecks) (deck1' ++ [c1, c2], deck2')
+        else -- (a, b) -> (a, b)
+          playRound (Set.insert decks previousStartingDecks) (deck1'', deck2'')
+      where
+        deck1'' = if c1 > c2 then deck1' ++ [c1, c2] else deck1'
+        deck2'' = if c2 > c1 then deck2' ++ [c2, c1] else deck2'
+
 solveA :: String -> String
 solveA s = show $ sum $ map (\(a, b) -> a * b) $ zip (reverse winningDeck) [1 ..]
   where
@@ -40,4 +60,8 @@ solveA s = show $ sum $ map (\(a, b) -> a * b) $ zip (reverse winningDeck) [1 ..
       ([], deck) -> deck
 
 solveB :: String -> String
-solveB s = s
+solveB s = show $ sum $ map (\(a, b) -> a * b) $ zip (reverse winningDeck) [1 ..]
+  where
+    winningDeck = case playGame $ parseDecks s of
+      (deck, []) -> deck
+      ([], deck) -> deck
