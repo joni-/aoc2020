@@ -18,6 +18,7 @@ import qualified Day16Test
 import qualified Day17Test
 import qualified Day20Test
 import qualified Day21Test
+import qualified Day22Test
 -- start.py import placeholder
 import Test.Tasty
 
@@ -47,5 +48,6 @@ tests =
     , Day17Test.tests
     , Day20Test.tests
     , Day21Test.tests
+    , Day22Test.tests
     -- start.py test placeholder
     ]
