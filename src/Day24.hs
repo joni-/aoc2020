@@ -8,27 +8,7 @@ data Step = East | SouthEast | SouthWest | West | NorthWest | NorthEast deriving
 
 data Color = White | Black deriving (Show, Eq)
 
-input' =
-  "sesenwnenenewseeswwswswwnenewsewsw\n\
-  \neeenesenwnwwswnenewnwwsewnenwseswesw\n\
-  \seswneswswsenwwnwse\n\
-  \nwnwneseeswswnenewneswwnewseswneseene\n\
-  \swweswneswnenwsewnwneneseenw\n\
-  \eesenwseswswnenwswnwnwsewwnwsene\n\
-  \sewnenenenesenwsewnenwwwse\n\
-  \wenwwweseeeweswwwnwwe\n\
-  \wsweesenenewnwwnwsenewsenwwsesesenwne\n\
-  \neeswseenwwswnwswswnw\n\
-  \nenwswwsewswnenenewsenwsenwnesesenew\n\
-  \enewnwewneswsewnwswenweswnenwsenwsw\n\
-  \sweneswneswneneenwnewenewwneswswnese\n\
-  \swwesenesewenwneswnwwneseswwne\n\
-  \enesenwswwswneneswsenwnewswseenwsese\n\
-  \wnwnesenesenenwwnenwsewesewsesesew\n\
-  \nenewswnwewswnenesenwnesewesw\n\
-  \eneswnwswnwsenenwnwnwwseeswneewsenese\n\
-  \neswnwewnwnwseenwseesewsenwsweewe\n\
-  \wseweeenwnesenwwwswnew"
+type FloorState = M.HashMap Coordinate Color
 
 parseSteps :: String -> [Step] -> [Step]
 parseSteps "" acc = acc
@@ -58,6 +38,50 @@ parseCoordinate (step : rest) (x, y) = parseCoordinate rest (x', y')
       SouthEast -> y + 1
       _ -> y
 
+neighbors :: Coordinate -> [Coordinate]
+neighbors (x, y) = [east, west, northWest, southWest, northEast, southEast]
+  where
+    east = (x + 2, y)
+    west = (x - 2, y)
+    northWest = (x - 1, y - 1)
+    southWest = (x - 1, y + 1)
+    northEast = (x + 1, y - 1)
+    southEast = (x + 1, y + 1)
+
+updateState :: FloorState -> FloorState
+updateState state = M.fromList newState
+  where
+    newState =
+      map
+        ( \c -> case M.lookupDefault White c state of
+            White -> if length (filter (== Black) $ neighborColors c) == 2 then (c, Black) else (c, White)
+            Black -> if numOfBlacks == 0 || numOfBlacks > 2 then (c, White) else (c, Black)
+              where
+                numOfBlacks = length (filter (== Black) $ neighborColors c)
+        )
+        $ M.keys state
+
+    neighborColors :: Coordinate -> [Color]
+    neighborColors coordinate = map (\c -> M.lookupDefault White c state) $ neighbors coordinate
+
+getNewState :: FloorState -> Coordinate -> Color
+getNewState state coordinate = case currentState of
+  White -> if blacks == 2 then Black else White
+  Black -> if blacks == 0 || blacks > 2 then White else Black
+  where
+    currentState = M.lookupDefault White coordinate state
+    neighborColors = map (\c -> M.lookupDefault White c state) $ neighbors coordinate
+    blacks = length $ filter (== Black) neighborColors
+
+nextCycle :: FloorState -> FloorState
+nextCycle state = M.fromList $ map (\c -> (c, getNewState state c)) allCoordinates
+  where
+    coordinates = M.keys state
+    allCoordinates = concatMap neighbors coordinates
+
+cycleTimes :: Int -> Int -> FloorState -> FloorState
+cycleTimes times acc state = if times == acc then state else cycleTimes times (acc + 1) (nextCycle state)
+
 solveA :: String -> String
 solveA s = show $ length $ filter (\(_, value) -> value == Black) $ M.toList state
   where
@@ -70,4 +94,12 @@ solveA s = show $ length $ filter (\(_, value) -> value == Black) $ M.toList sta
           Black -> White
 
 solveB :: String -> String
-solveB s = s
+solveB s = show $ length $ filter (\(_, value) -> value == Black) $ M.toList $ cycleTimes 100 0 initialState
+  where
+    coordinates = map ((`parseCoordinate` (0, 0)) . (`parseSteps` [])) $ lines s
+    initialState = foldl f M.empty coordinates
+    f state coordinate = M.insert coordinate newValue state
+      where
+        newValue = case M.lookupDefault White coordinate state of
+          White -> Black
+          Black -> White
