@@ -36,19 +36,16 @@ solveA s = show $ busId * wait
     (busId, depart) = earliestDepart $ earliestDeparts target busIds
     wait = depart - target
 
-matches :: [(Integer, Integer)] -> Integer -> Bool
-matches busIds tick = all (== 0) (map (\(busId, index) -> (tick + index) `mod` busId) busIds)
-
-findTicks :: (Integer, Integer) -> (Integer, Integer) -> [Integer]
-findTicks (firstId, _) (lastId, lastIndex) = [tick - lastIndex | tick <- [1 ..], tick `mod` firstId == 0 && tick `mod` lastId == 0]
-
--- findTicks (firstId, firstIndex) (lastId, lastIndex) currentTick ticks = if firstMatch && lastMatch then findTicks (firstId, firstIndex) (lastId, lastIndex) (currentTick + 1) (currentTick : ticks) else findTicks (firstId, firstIndex) (lastId, lastIndex) (currentTick + 1) ticks
---   where
---     lastMatch = currentTick `mod` lastId == 0
---     firstMatch = currentTick `mod` firstId == 0
+-- thanks
+-- https://www.reddit.com/r/adventofcode/comments/kc4njx/2020_day_13_solutions/ghf18ej/?utm_source=reddit&utm_medium=web2x&context=3
+iter :: Integer -> Integer -> Integer -> Integer -> (Integer, Integer)
+iter time step offset bid =
+  if (time + offset) `mod` bid == 0
+    then (time, step * bid)
+    else iter (time + step) step offset bid
 
 solveB :: String -> String
-solveB s = showJust match
+solveB s = show $ fst $ foldl f (1, 1) busIds
   where
     busIds = map (\(a, b) -> (toInteger a, toInteger b)) $ parseBusIdsB s
-    match = find (matches busIds) $ findTicks (head busIds) (last busIds)
+    f (t, step) (bid, offset) = iter t step offset bid
