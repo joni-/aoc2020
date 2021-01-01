@@ -1,6 +1,11 @@
 module Day10 where
 
+import qualified Data.HashMap.Strict as M
+import Data.List (sort)
+import Data.Set (Set)
 import qualified Data.Set as S
+import Debug.Trace (trace)
+import Util (showJust)
 
 input1' =
   "16\n\
@@ -48,20 +53,41 @@ input2' =
   \10\n\
   \3"
 
+input3' =
+  "1\n\
+  \2\n\
+  \8\n\
+  \6\n\
+  \3"
+
 type Adapter = Int
 
-nextAdapter :: Int -> S.Set Adapter -> Maybe (Adapter, S.Set Adapter)
+nextAdapter :: Int -> Set Adapter -> Maybe (Adapter, Set Adapter)
 nextAdapter currentJolt adapters
   | S.member (currentJolt + 1) adapters = Just (currentJolt + 1, S.delete (currentJolt + 1) adapters)
   | S.member (currentJolt + 2) adapters = Just (currentJolt + 2, S.delete (currentJolt + 2) adapters)
   | S.member (currentJolt + 3) adapters = Just (currentJolt + 3, S.delete (currentJolt + 3) adapters)
   | otherwise = Nothing
 
-adapterChain :: S.Set Adapter -> [Adapter] -> Adapter -> [Adapter]
+nextAdapter' :: Int -> Set Adapter -> Maybe (Adapter, Set Adapter)
+nextAdapter' currentJolt adapters
+  | S.member (currentJolt + 3) adapters = Just (currentJolt + 3, S.filter (\v -> v > currentJolt + 3) adapters)
+  | S.member (currentJolt + 2) adapters = Just (currentJolt + 2, S.filter (\v -> v > currentJolt + 2) adapters)
+  | S.member (currentJolt + 1) adapters = Just (currentJolt + 1, S.filter (\v -> v > currentJolt + 1) adapters)
+  | otherwise = Nothing
+
+adapterChain :: Set Adapter -> [Adapter] -> Adapter -> [Adapter]
 adapterChain adapters chain currentAdapter = if null adapters then chain ++ [currentAdapter + 3] else f
   where
     f = case nextAdapter currentAdapter adapters of
       Just (adapter, adapters') -> adapterChain adapters' (chain ++ [adapter]) adapter
+      Nothing -> []
+
+adapterChain' :: Set Adapter -> [Adapter] -> Adapter -> [Adapter]
+adapterChain' adapters chain currentAdapter = if null adapters then chain ++ [currentAdapter + 3] else f
+  where
+    f = case nextAdapter' currentAdapter adapters of
+      Just (adapter, adapters') -> adapterChain' adapters' (chain ++ [adapter]) adapter
       Nothing -> []
 
 toNumbers :: String -> [Int]
@@ -75,5 +101,17 @@ solveA s = show $ ones * threes
     ones = length $ filter (== 1) diffs
     threes = length $ filter (== 3) diffs
 
+getCounts :: [Int] -> M.HashMap Int Int -> M.HashMap Int Int
+getCounts [] counts = counts
+getCounts (x : xs) counts = getCounts xs (M.insert x (x1 + x2 + x3) counts)
+  where
+    x1 = M.lookupDefault 0 (x - 1) counts
+    x2 = M.lookupDefault 0 (x - 2) counts
+    x3 = M.lookupDefault 0 (x - 3) counts
+
 solveB :: String -> String
-solveB s = s
+solveB s = showJust $ M.lookup max $ getCounts (tail ns') (M.fromList [(0, 1)])
+  where
+    ns = toNumbers s
+    max = maximum ns + 3
+    ns' = sort $ [0] ++ ns ++ [max]

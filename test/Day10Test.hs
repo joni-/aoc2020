@@ -55,5 +55,6 @@ tests =
     "Day10"
     [ testCase "solveA 1" $ solveA input1 @?= "35",
       testCase "solveA 2" $ solveA input2 @?= "220",
-      testCase "solveB" $ solveB "hello" @?= "hello"
+      testCase "solveB" $ solveB input1 @?= "8",
+      testCase "solveB" $ solveB input2 @?= "19208"
     ]
