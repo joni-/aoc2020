@@ -2,7 +2,7 @@ module Parser where
 
 import Control.Applicative (Alternative, empty, (<|>))
 import Control.Monad (Monad, (>>=))
-import Data.Char (isDigit)
+import Data.Char (isDigit, isSpace)
 
 newtype Parser a = Parser {runParser :: String -> Maybe (a, String)}
 
@@ -45,6 +45,12 @@ charP c = Parser f
     f (x : xs) = if x == c then Just (c, xs) else Nothing
     f _ = Nothing
 
+anyChar :: Parser Char
+anyChar = Parser f
+  where
+    f (x : xs) = Just (x, xs)
+    f [] = Nothing
+
 stringP :: String -> Parser String
 stringP = traverse charP
 
@@ -74,3 +80,13 @@ between start end = runParser $ charP start *> spanP (/= end) <* charP end
 
 until :: Char -> String -> Maybe (String, String)
 until target = runParser $ spanP (/= target) <* charP target
+
+many, many1 :: Parser a -> Parser [a]
+many p = many1 p <|> return []
+many1 p = do
+  first <- p
+  rest <- many p
+  return (first : rest)
+
+whitespace :: Parser String
+whitespace = spanP isSpace

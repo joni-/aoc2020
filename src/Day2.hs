@@ -1,6 +1,7 @@
 module Day2 where
 
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, mapMaybe)
+import Parser
 import Util (splitOn, trim)
 
 data Policy = Policy
@@ -12,36 +13,17 @@ data Policy = Policy
 
 type Password = String
 
-parseRange :: String -> Maybe (Int, Int)
-parseRange s = case splitOn " " s of
-  (range : _) -> case splitOn "-" range of
-    (x : y : _) -> Just (read x :: Int, read y :: Int)
-    _ -> Nothing
-  _ -> Nothing
-
-parseChar :: String -> Maybe Char
-parseChar s = case splitOn " " s of
-  (_ : rest : _) -> case rest of
-    (c : _) -> Just c
-    _ -> Nothing
-
-parsePassword :: String -> Maybe String
-parsePassword s = case splitOn ":" s of
-  (_ : password : _) -> Just (trim password)
-  _ -> Nothing
-
-parsePolicyAndPassword :: String -> Maybe (Policy, Password)
-parsePolicyAndPassword s = result
-  where
-    range = parseRange s
-    char = parseChar s
-    password = parsePassword s
-    result = case range of
-      Just (min, max) -> case char of
-        Just c -> case password of
-          Just p -> Just (Policy {policyMin = min, policyMax = max, policyChar = c}, p)
-          _ -> Nothing
-        Nothing -> Nothing
+parsePolicyAndPassword :: Parser (Policy, Password)
+parsePolicyAndPassword = do
+  min <- head <$> many1 intP
+  charP '-'
+  max <- head <$> many1 intP
+  whitespace
+  char <- anyChar
+  charP ':'
+  whitespace
+  password <- many anyChar
+  return (Policy {policyMin = min, policyMax = max, policyChar = char}, password)
 
 isValidA :: (Policy, Password) -> Bool
 isValidA (policy, password) = count >= policyMin policy && count <= policyMax policy
@@ -56,7 +38,7 @@ isValidB (policy, password) = (== 1) $ length $ filter (== policyChar policy) [c
     charAtSecond = password !! (policyMax policy - 1)
 
 solveA :: String -> String
-solveA s = show $ length $ filter isValidA $ catMaybes $ parsePolicyAndPassword <$> lines s
+solveA s = show $ length $ filter isValidA $ mapMaybe (fmap fst . runParser parsePolicyAndPassword) $ lines s
 
 solveB :: String -> String
-solveB s = show $ length $ filter isValidB $ catMaybes $ parsePolicyAndPassword <$> lines s
+solveB s = show $ length $ filter isValidB $ mapMaybe (fmap fst . runParser parsePolicyAndPassword) $ lines s
