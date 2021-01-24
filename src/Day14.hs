@@ -1,5 +1,6 @@
 module Day14 where
 
+import Control.Applicative ((<|>))
 import Control.Monad (replicateM)
 import Data.Char (digitToInt, intToDigit)
 import Data.Foldable (toList)
@@ -8,7 +9,7 @@ import qualified Data.Map as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Sequence as Seq
 import Numeric (readInt, showIntAtBase)
-import Parser (between, parseInt)
+import Parser
 
 -- stolen from stack overflow
 readBin :: Integral a => String -> Maybe a
@@ -53,14 +54,19 @@ applyMaskV2 mask value = mapMaybe readBin (replaceXs $ zipWith (curry f) mask va
     f ('1', _) = '1'
     f (m, _) = m
 
-parseCommand :: String -> Maybe Command
-parseCommand command = case command of
-  ('m' : 'a' : 's' : 'k' : ' ' : '=' : ' ' : xs) -> Just (SetMask xs)
-  ('m' : 'e' : 'm' : xs) -> case between '[' ']' xs of
-    Just (memory, rest) -> case parseInt (drop 3 rest) of
-      Just (value, _) -> Just $ UpdateMemory (read memory) (toInteger value)
-      Nothing -> Nothing
-    Nothing -> Nothing
+commandP :: Parser Command
+commandP = maskP <|> memP
+  where
+    maskP = do
+      stringP "mask = "
+      mask <- many1 anyChar
+      return $ SetMask mask
+    memP = do
+      stringP "mem["
+      memory <- toInteger <$> intP
+      stringP "] = "
+      value <- toInteger <$> intP
+      return $ UpdateMemory memory value
 
 updateStateV1 :: State -> Integer -> Integer -> State
 updateStateV1 (mask, memory) address value = case mask of
@@ -84,7 +90,7 @@ runCommand updateFn (mask, memory) command = case command of
 solve' :: (State -> Command -> State) -> String -> String
 solve' updateFn s = show $ sum $ map snd $ M.toList memory
   where
-    commands = mapMaybe parseCommand $ lines s
+    commands = map fst $ mapMaybe (runParser commandP) $ lines s
     (_, memory) = foldl updateFn (Nothing, M.empty) commands
 
 solveA :: String -> String
